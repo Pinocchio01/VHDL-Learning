@@ -32,25 +32,22 @@ use IEEE.STD_LOGIC_1164.ALL;
 --use UNISIM.VComponents.all;
 
 entity andn is
---n输入与门
     generic(
         n : integer := 2);
     port( 
         a   : in std_logic_vector(n-1 downto 0);
-      --clk : in std_logic;
-        c   : out std_logic);    
+        c   : out std_logic);                                     --clk : in std_logic;   
 end andn;
 
 architecture Behavioral of andn is
 begin
     process(a)
         variable mark : std_logic;
-        --逻辑型变量mark，记录output结果
     begin
         mark := '1';
         for i in a'length-1 downto 0 loop
             if a(i) = '0' then 
-                mark := '0';--赋值为零
+                mark := '0';                                     -- notice how to set value to a variable instead of a signal
             end if;
         end loop;
     c <= mark;
