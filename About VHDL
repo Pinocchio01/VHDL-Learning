@@ -1,0 +1,4 @@
+-- What is VHDL?
+-- Very High-Speed Integrated Circuit Hardware Description Language (VHDL) is a description language used to describe hardware. 
+   It is utilized in electronic design automation to express mixed-signal and digital systems, 
+   such as ICs (integrated circuits) and FPGA (field-programmable gate arrays).
