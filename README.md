@@ -1,4 +1,2 @@
 # VHDL-Learning
-Here is learning material collected for VHDL.
-ALso include introduction file and notes for Vivado.
-Verilog shares some similarity to VHDL and not mentioned here.
+Here are some codes I wrote in VHDL, including coding style.
