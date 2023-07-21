@@ -1,22 +1,27 @@
------------------------------------------------------------------------- 
+----------------------------------------------------------------------------------------------
+--
+-- Title: Common digital circuit components written in VHDL 
+--
 -- Company: University of Stuttgart (IIS)
--- Engineer: Yichao Peng
--- 
--- Create Date: 2022/09/25 15:51
--- Design Name: 
--- Module Name: Paul_Components_VHDL
--- Project Name: Common circuit components written in VHDL
+--
+-- Author: Yichao Peng
+--
+-- Project Name: VHDL Coding Style
+--
 -- Target Devices: 
--- Tool Versions:
--- Description: 
--- 
+-- Tool Versions: 
+-- Description: This document includes digital circuits design components. All validated.
+--              Copyright reserved.
 -- Dependencies: 
 -- 
--- Revision:
--- Revision 0.01 - File Created
-
 -- Additional Comments: The codes does not include library declaration unless special case.
--- All codes tested.
+-- 
+-- History:
+-- 	Version 0.1  Create file, Yichao Peng, 2022/09/25 15:51:30
+--
+----------------------------------------------------------------------------------------------
+
+
 
 -- List for components:
 -- 1. 	NAND Gate
@@ -25,9 +30,6 @@
 -- 4. 	Down-counter (4-bit)
 -- 5. 	Adder
 
-
-
-------------------------------------------------------------------------
 
 LIBRARY ieee;
 USE ieee.std_logic_1164.ALL;

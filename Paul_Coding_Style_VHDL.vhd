@@ -1,26 +1,27 @@
------------------------------------------------------------------------- Company: university of stuttgart (IIS)
--- Engineer: Yichao Peng
--- 
--- Create Date: 2022/07/24 16:59:40
--- Design Name: 
--- Module Name: Coding_Style_VHDL - Behavioral
--- Project Name: Coding style and cheat sheet for VHDL 
+----------------------------------------------------------------------------------------------
+--
+-- Title: Coding_Style_VHDL
+--
+-- Company: University of Stuttgart (IIS)
+--
+-- Author: Yichao Peng
+--
+-- Project Name: VHDL Coding Style
+--
 -- Target Devices: 
--- Tool Versions:
--- Description: * means annotations for important content or format.
---              No difference between Uppercase and lowercase in VHDL.
--- 
+-- Tool Versions: 
+-- Description: This document includes digital circuits design components. All validated.
+--              Copyright reserved.
 -- Dependencies: 
 -- 
--- Revision:
--- Revision 0.01 - File Created
+-- Additional Comments: * means annotations for important content or format.
+-- 						No difference between Uppercase and lowercase in VHDL.
+--                      The examples of different parts are just to show coding style, not coherent and not executable.
+-- History:
+-- 	Version 0.1  Create file, Yichao Peng, 2022/09/25 15:51:30
+--
+----------------------------------------------------------------------------------------------
 
--- Additional Comments:
-
--- These examples shown below illustrate the formatting enforced by CSV (this document). 
--- The examples of different parts are just to show coding style, not coherent and not executable.
-
--- A cheat sheet for common statements in VHDL please refer to the other '.vhd' document in this serial.
 
 -- They show a subset of the rules used in VHDL coding:
 -- 1. Capitalization & Uppercase

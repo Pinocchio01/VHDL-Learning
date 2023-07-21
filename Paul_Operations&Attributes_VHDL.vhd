@@ -1,57 +1,59 @@
 ------------------------------------------------------------------------ 
+--
+-- Title: Operations&Attributes in VHDL 
+--
 -- Company: University of Stuttgart (IIS)
--- Engineer: Yichao Peng
--- 
--- Create Date: 2022/09/28 17:28:40
--- Design Name: 
--- Module Name: 
--- Project Name: Operations in VHDL 
+--
+-- Author: Yichao Peng
+--
+-- Project Name: VHDL Coding Style
+--
 -- Target Devices: 
--- Tool Versions:
+-- Tool Versions: 
 -- Description: This document includes the Operations in VHDL and Attributes of data types.
--- 
+-- 				Copyright reserved.
 -- Dependencies: 
 -- 
--- Revision:
--- Revision 0.01 - File Created
-
+-- History:
+-- 	Version 0.1  Create file, Yichao Peng, 2022/09/28 17:28:40
+--
 -- Additional Comments:
-
+--
 -- Part 1 : Operations in VHDL (6 Predefined Operations):
-
+--
 -- 1.1 Assignment operations
 -- 1.2 Logical operations
 -- 1.3 Arithmetic operations
 -- 1.4 Relational operations
 -- 1.5 Shift operations
 -- 1.6 Concatenation operations
-
+--
 -- Part 2 : Attributes in VHDL:
-
+--
 -- 2.1 Predefined attributes
 --		2.1.1 Value type attributes
 --      2.1.2 Signal type attributes
 -- 2.2 User defined attributes
-
+--
 -- Part 3 : Operations extension : user defined function
-
+--
 -- Part 4 : Generics
-
-
+--
 ------------------------------------------------------------------------
+
+
 
 ------------ Part 1 : Operations in VHDL ---------------
 
 ----- 1.1 : Assignment operations -----
 
 SIGNAL x : std_logic;
-VARIABLE y : STD_LOGIC_VECTOR(3 DOWNTO 0);
-SIGNAL z : STD_LOGIC_VECTOR(0 TO 7);
+VARIABLE y : STD_LOGIC_VECTOR(3 DOWNTO 0); -- left most MSB
+SIGNAL z : STD_LOGIC_VECTOR(0 TO 7); -- right most MSB
 
 x <= '1';                        -- <= SIGNAL
 y := "0000";					 -- := VARIABLE, CONSTANT and GENERIC, or initial value of SIGNAL
 z <= (0 => '1', OTHERS => '0');  -- => some bits in vector
-
 
 
 ----- 1.2 : Logical operations -----
@@ -64,52 +66,51 @@ y <= NOT(a AND b);		-- (a.b)'
 y <= a NAND b;			-- (a.b)'
 
 
-
 ----- 1.3 : Arithmetic operations -----
  
 -- * Operands must in following types: INTEGER, SIGNED, UNSIGNED, REAL. REAL unsynthesizable.
 -- * If std_logic_signed and std_logic_unsigned declared, STD_LOGIC_VECTOR objects can add or substract.
 
--- 8 operators: +, -, *, /, **, MOD, REM, ABS (+,-,* synthesizable, / only for divider 2**n).
+-- 8 operators: +, -, *, /, **, MOD, REM, ABS (+,-,* synthesizable, / only synthesizable for divider 2**n, which means shift right n bits).
 
 delta <= ABS(a-b);
-c     <= a MOD b;
-
+c     <= a MOD b; -- pay attention to difference between MOD and REM
 
 
 ----- 1.4 : Relational operations -----
 
 -- =, /=, <, >, <=, >=
--- Operants must in same type. Can be any type named before.
+-- Operants must in any same type named before.
 
 counter /= 8;  -- return true or false
 
 
-
 ----- 1.5 : Shift operations -----
-
--- introduced by VHDL 93
--- syntatic structure: <left operand> <shift operator> <right operator>
+/*
+(1) introduced by VHDL 93
+(2) syntatic structure: <left operand: bit_vector> <shift operator> <right operator: integer>
+*/
 
 x <= "01001";
 
-y <= x SLL 2; 	-- shift left logic "00100" add 0 on right
-y <= x SLA 2; 	-- shift left arithmatic "00111" copy right
+y <= x SLL 2; 	-- shift left logic "00100", add 0 on right
 y <= x SRL 3; 	-- shift right logic "00001" add 0 on left
-y <= x SRA 3; 	-- shift right arithmatic "00001" copy left
-y <= x ROL 2; 	-- ring on left "00101" circular shift
 y <= x SRL -2; 	-- equal to SLL 2
 
+y <= x SLA 2; 	-- shift left arithmatic "00111", copy right
+y <= x SRA 3; 	-- shift right arithmatic "00001" copy left
+
+y <= x ROL 2; 	-- ring on left "00101" circular shift
+y <= x ROR 2;   -- ring on right "01010" circular shift
 
 
 ----- 1.6 : Concatenation operations -----
 
 -- bit concatenation, used on any type supporting logical operations
--- Two forms: & or (,,,)
+-- Two forms: (1) & (2) (,,,)
 
 z <= x & "10000000";	-- x <= '1' then z <= "11000000"
 z <= ('1', '1','0', '0', '0', '0', '0', '0')	-- z <= "11000000"
-
 
 
 
@@ -120,16 +121,16 @@ z <= ('1', '1','0', '0', '0', '0', '0', '0')	-- z <= "11000000"
 
 -- 2.1 Predefined Attributes(VHDL 87): value type and signal type
 
--- 2.1.1 Value type
+-- 2.1.1 Value type attribute
 
 -- synthesizable : d'LOW, d'HIGH, d'LEFT, d'RIGHT, d'LENGTH, d'RANGE, d'REVERSE_RANGE
 
 SIGNAL d : STD_LOGIC_VECTOR(7 DOWNTO 0);
 -- d'LOW = 0, d'HIGH = 7, d'LEFT = 7, d'RIGHT = 0, d'LENGTH = 8, d'RANGE = (7 DOWNTO 0), d'REVERSE_RANGE = (0 TO 7)
-
+-- type: integer
 -- following 4 loops are equal and synthesizable:
 
-FOR i IN RANGE(0 TO 7) LOOP...
+FOR i IN RANGE(0 TO 7) LOOP... -- generate n hardware circuits, instead of running a code n times
 FOR i IN x'RANGE(0 TO 7)LOOP...
 FOR i IN RANGE(x'LOW TO x'HIGH) LOOP...
 FOR i IN RANGE(0 TO x'LENGTH-1) LOOP... 
@@ -138,7 +139,7 @@ FOR i IN RANGE(0 TO x'LENGTH-1) LOOP...
 
 -- d'VAL(pos), d'POS(value), d'LEFTOF(value), d'VAL(row,column)
 
--- 2.1.2 Signal type
+-- 2.1.2 Signal type attribute
 
 -- s'EVENT & s'STABLE : synthesizable
 -- s'ACTIVE, s'QUITE<time>, s'LAST_EVENT, s'LAST_ACTIVE, s'LAST_VALUE : unsynthesizable, only for simulation
@@ -207,7 +208,10 @@ GENERIC (parameter_name : parameter_type := parameter_value);
 -- example 1:
 
 ENTITY my_entity IS
-	GENERIC (n : integer := 8; vector : bit_vector(7 DOWNTO 0) := "00001111");
+	GENERIC (
+		n : integer := 8,
+		vector : bit_vector(7 DOWNTO 0) := "00001111"
+	);
 	PORT (...);
 END my_entity;
 ARCHITECTURE my_architecture OF my_entity IS

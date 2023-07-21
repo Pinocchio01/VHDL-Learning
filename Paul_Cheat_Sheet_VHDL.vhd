@@ -1,27 +1,27 @@
------------------------------------------------------------------------- 
+----------------------------------------------------------------------------------------------
+--
+-- Title: Cheat_Sheet_VHDL
+--
 -- Company: University of Stuttgart (IIS)
--- Engineer: Yichao Peng
--- 
--- Create Date: 2022/07/24 16:59:40
--- Design Name: 
--- Module Name: Cheat_Sheet_VHDL - Behavioral
--- Project Name: Cheat sheet for VHDL 
+--
+-- Author: Yichao Peng
+--
+-- Project Name: VHDL Coding Style
+--
 -- Target Devices: 
--- Tool Versions:
--- Description: 
--- 
+-- Tool Versions: 
+-- Description: These examples shown below illustrate how to write common constructive parts in VHDL suggested by CSV.
+--              Copyright reserved.
 -- Dependencies: 
 -- 
--- Revision:
--- Revision 0.01 - File Created
+-- Additional Comments: The suggested coding style in VHDL please refer to the other '.vhd' document in this series.
+-- 
+-- History:
+-- 	Version 0.1  Create file, Yichao Peng, 2022/07/24 16:59:40
+--
+----------------------------------------------------------------------------------------------
 
--- Additional Comments:
-
--- These examples shown below illustrate how to write common functional parts in VHDL suggested by CSV.
-
--- The suggested coding style in VHDL please refer to the other '.vhd' document in this serial.
-
--- This document provides a cheat sheet for writing: 
+-- This document provides a cheat sheet for writing:
 -- No.1-No.3 : three basic parts of VHDL codes
 -- 1. Library (and Packages inside)
 -- 2. Entity

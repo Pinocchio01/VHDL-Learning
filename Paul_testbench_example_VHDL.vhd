@@ -1,94 +1,109 @@
 ----------------------------------------------------------------------------------
--- Company: University of Stuttgart
--- Engineer: 
--- 
--- Create Date: 2022/09/25 14:03:41
--- Design Name: NMR sequence generator
--- Module Name: tb_fpga_pulse_mem - Behavioral
--- Project Name: 
+--
+-- Title: testbench example
+--
+-- Company: IIS, University of Stuttgart
+--
+-- Author: Yichao Peng
+--
+-- Project Name: VHDL Coding Style
+--
 -- Target Devices: 
 -- Tool Versions: 
--- Description: 
+-- Description: This file contains the details of writing testbench.
+--              Copyright reserved.
 -- 
 -- Dependencies: 
 -- 
--- Revision:
--- Revision 0.01 - File Created
 -- Additional Comments:
 -- 
+-- History:
+-- 	Version 0.1  Create file, Yichao Peng, 2022/09/25 14:03:41
+--  
 ----------------------------------------------------------------------------------
 
 -- ! Use standard library ieee
 LIBRARY IEEE;
-
 -- ! Use logic elements
 USE ieee.std_logic_1164.ALL;
 -- ! Use numeric functions
 USE ieee.numeric_std.ALL;
+-- ! Use real numbe functions
 USE ieee.math_real.ALL;
-
 -- ! Use library fpga_pulse_gen_pkg
 USE work.fpga_pulse_gen_pkg.ALL;
+
 
 ENTITY tb_fpga_pulse_gen IS
 --  Port ( );
 END tb_fpga_pulse_gen;
 
+
 ARCHITECTURE Behavioral OF tb_fpga_pulse_gen IS
 	
 	-- constants
-	CONSTANT clk_period : time := 10 ns; 								    -- 100 MHz or any other clock frequency
-		-- 0 in std_logic_vector
+	CONSTANT clk_period : time := 10 ns; -- clock period
 	CONSTANT f_lamor : std_logic_vector(C_DATA_WIDTH - 1 DOWNTO 0) 	  := "00001111010111000010100011110110"; -- 6 MHz
 	CONSTANT f_local : std_logic_vector(C_DATA_WIDTH - 1 DOWNTO 0)    := "00001111100111011011001000101101"; -- 6.1 MHz
 	CONSTANT pi      : integer := 134217728; -- 180° 					
 
-	
-    SIGNAL clk        						:   std_logic	:= '0';
-	SIGNAL o_tx_pulse						: 	std_logic	:= '0'; 		--tx pulse
-	SIGNAL o_rx_pulse						: 	std_logic	:= '0'; 		--rx pulse
-	SIGNAL ov_config_dds_data_ch0			:	std_logic_vector(C_DDS_CONFIG_DATA_WIDTH - 1 DOWNTO 0) := (OTHERS => '0'); -- DDS config data output
-	SIGNAL o_config_tvalid_ch0				:	std_logic	:= '0'; 		-- DDS valid SIGNAL output	
-	SIGNAL ov_config_dds_data_ch1			:   std_logic_vector(C_DDS_CONFIG_DATA_WIDTH - 1 DOWNTO 0) := (OTHERS => '0'); -- DDS config data output	
-	SIGNAL o_config_tvalid_ch1				:   std_logic	:= '0';	   		-- DDS valid SIGNAL output		
-	SIGNAL o_mux_ch							:   std_logic	:= '0'; 		-- channel digital switch
-	
-	SIGNAL i_en									: std_logic := '0';
-	-- select the section
-	SIGNAL iv_set_nr_sections					: unsigned(C_DATA_WIDTH - 1 DOWNTO 0) := (OTHERS => '0');
-	SIGNAL iv_write_sel_section					: unsigned(C_DATA_WIDTH - 1 DOWNTO 0) := (OTHERS => '0'); -- select the number of to config		
-	SIGNAL iv_set_section_type					: unsigned(C_DATA_WIDTH - 1 DOWNTO 0) := (OTHERS => '0'); -- section type 																					  -- 0: Tx																					  -- 1: Rx	
-	SIGNAL iv_set_delay 						: unsigned(C_DATA_WIDTH - 1 DOWNTO 0) := (OTHERS => '0');	
-	SIGNAL iv_set_mux 							: unsigned(C_DATA_WIDTH - 1 DOWNTO 0) := (OTHERS => '0'); -- after tx wait mux change time
+	-- signals
+    SIGNAL 
+	i_clk,
+	o_tx_pulse, 				-- tx pulse
+	o_rx_pulse, 				-- rx pulse
+	o_config_tvalid_ch0,		-- DDS valid SIGNAL output
+	o_config_tvalid_ch1, 		-- DDS valid SIGNAL output
+	o_mux_ch 					-- channel digital switch
+	i_en 						-- enable signal
+	: std_logic := '0'; 	
+	SIGNAL
+	ov_config_dds_data_ch0,		-- DDS config data output
+	ov_config_dds_data_ch1
+	: std_logic_vector(C_DDS_CONFIG_DATA_WIDTH - 1 DOWNTO 0) := (OTHERS => '0'); 
+	-- select section
+	SIGNAL 
+	iv_set_nr_sections,			-- set total section number in a sequence
+	iv_write_sel_section,		-- select the index of section to configure		
+	iv_set_section_type,		-- set section type, 0: Tx 1: Rx 2: Delay
+	iv_set_delay,	            -- set section duration
+	iv_set_mux					-- digital multiplexer
+	: unsigned(C_DATA_WIDTH - 1 DOWNTO 0) := (OTHERS => '0');
 	-- repetition contol
-	SIGNAL iv_set_start_repeat_pointer			: unsigned(C_DATA_WIDTH - 1 DOWNTO 0) := (OTHERS => '0');
-	SIGNAL iv_set_end_repeat_pointer 			: unsigned(C_DATA_WIDTH - 1 DOWNTO 0) := (OTHERS => '0');
-	SIGNAL iv_set_cycle_repetition_number		: unsigned(C_DATA_WIDTH - 1 DOWNTO 0) := (OTHERS => '0');		
-	SIGNAL iv_set_experiment_repetition_number	: unsigned(C_DATA_WIDTH - 1 DOWNTO 0) := (OTHERS => '0');
+	SIGNAL
+	iv_set_start_repeat_pointer, 			-- repetition start section index
+	iv_set_end_repeat_pointer,				-- repetition end section index
+	iv_set_cycle_repetition_number,			-- times of cycle repetition
+	iv_set_experiment_repetition_number 	-- times of experiment repetition
+	: unsigned(C_DATA_WIDTH - 1 DOWNTO 0) := (OTHERS => '0');    
 	-- DDS contol		
-	SIGNAL iv_set_phase_ch0		 				: unsigned(C_DATA_WIDTH - 1 DOWNTO 0) := (OTHERS => '0'); -- configuration the phase of dds
-	SIGNAL iv_set_frequency_ch0		 			: unsigned(C_DATA_WIDTH - 1 DOWNTO 0) := (OTHERS => '0'); -- configuraton the frequency 		
-	SIGNAL iv_set_phase_ch1			 			: unsigned(C_DATA_WIDTH - 1 DOWNTO 0) := (OTHERS => '0'); -- configuration the phase of dds
-	SIGNAL iv_set_frequency_ch1		 			: unsigned(C_DATA_WIDTH - 1 DOWNTO 0) := (OTHERS => '0'); -- configuraton the frequency 		
-	SIGNAL iv_set_resetn_dds					: unsigned(C_DATA_WIDTH - 1 DOWNTO 0) := (OTHERS => '0');
-	SIGNAL o_busy								: std_logic := '0';
-	SIGNAL o_data_ready							: std_logic := '0';
+	SIGNAL 
+	iv_set_phase_ch0, 		-- configuration the phase of dds
+	iv_set_frequency_ch0 	-- configuraton the frequency 		
+	iv_set_phase_ch1 		-- configuration the phase of dds
+	iv_set_frequency_ch1	-- configuraton the frequency 		
+	iv_set_resetn_dds		-- dds reset signal
+	: unsigned(C_DATA_WIDTH - 1 DOWNTO 0) := (OTHERS => '0');
+	SIGNAL
+	o_busy,                 -- slave busy signal
+	o_data_ready			-- slave ready signal
+	: std_logic := '0';    
 	
-	component dds_compiler_0 IS
+	COMPONENT dds_compiler_0 IS
 	  PORT (
-		aclk : IN STD_LOGIC;
+		a_clk : IN STD_LOGIC;
 		aresetn : IN STD_LOGIC;  	
 		s_axis_config_tvalid : IN STD_LOGIC;
 		s_axis_config_tdata : IN STD_LOGIC_VECTOR(63 DOWNTO 0);
 		m_axis_data_tvalid : OUT STD_LOGIC;
 		m_axis_data_tdata : OUT STD_LOGIC_VECTOR(15 DOWNTO 0)
 	  );
-	END component;
+	END COMPONENT;
 
 		
-	component dds_compiler_1 IS
+	COMPONENT dds_compiler_1 IS
 	  PORT (
-		aclk : IN STD_LOGIC;
+		a_clk : IN STD_LOGIC;
 		aresetn : IN STD_LOGIC;        
 		s_axis_config_tvalid : IN STD_LOGIC;
 		s_axis_config_tdata : IN STD_LOGIC_VECTOR(63 DOWNTO 0);
@@ -107,10 +122,12 @@ ARCHITECTURE Behavioral OF tb_fpga_pulse_gen IS
 	: STD_LOGIC_VECTOR(15 DOWNTO 0):= (OTHERS => '0');
 	
 BEGIN
+
+	-- instantiations
 	inst_dds_0: dds_compiler_0
 	PORT MAP
 	(
-		aclk => clk,
+		a_clk => i_clk,
 		aresetn              => aresetn,		
 		s_axis_config_tvalid => o_config_tvalid_ch0,
 		s_axis_config_tdata => ov_config_dds_data_ch0,
@@ -121,7 +138,7 @@ BEGIN
 	inst_dds_1: dds_compiler_1
 	PORT MAP
 	(
-		aclk => clk,
+		a_clk => i_clk,
 		aresetn              => aresetn,
 		s_axis_config_tvalid => o_config_tvalid_ch1,
 		s_axis_config_tdata => ov_config_dds_data_ch1,
@@ -129,9 +146,9 @@ BEGIN
 		m_axis_data_tdata => m_axis_data_tdata_ch1
 	);
 	
-	-- An instance of fpga_pulse_gen with architecture Behavioral
+	-- An instance of fpga_pulse_gen with architecture Behavioral, no need to declare component first
 	inst_fpga_pulse_gen : ENTITY work.fpga_pulse_gen(Behavioral) PORT MAP(
-		clk 									=>	clk,
+		clk 									=>	i_clk,
 		o_tx_pulse								=>	o_tx_pulse,
 		o_rx_pulse								=>	o_rx_pulse,	
 		ov_config_dds_data_ch0					=>	ov_config_dds_data_ch0,
@@ -165,16 +182,16 @@ BEGIN
 
 	-- Testbench processes
 	
-	PROCESS -- system reference clock
+	PROCESS -- 1. system reference clock process
 	BEGIN
-		clk <= '1';
+		i_clk <= '1';
 		WAIT FOR clk_period/2;
-		clk <= '0';
+		i_clk <= '0';
 		WAIT FOR clk_period/2;
 	END PROCESS;
 
-	PROCESS		-- fpga_pulse_gen test
-		-- procedure define
+	PROCESS		-- 2. fpga_pulse_gen test logic process
+		-- define procedure
 	    PROCEDURE Load_Data_Prod
         (
 			CONSTANT write_sel_section  : IN INTEGER;
@@ -188,9 +205,9 @@ BEGIN
 			CONSTANT set_resetn_dds		: IN INTEGER
         ) IS
         BEGIN
-            -- WAIT UNTIL rising_edge(clk);     -- use wait until rising_edge instead of wait for 1 ms (not exact edge defined)
+            -- WAIT UNTIL rising_edge(i_clk);     -- use wait until rising_edge instead of wait for 1 ms (not exact edge defined)
 			-- choose write (and read section)
-			WAIT UNTIL rising_edge(clk);
+			WAIT UNTIL rising_edge(i_clk);
 			iv_write_sel_section  	 				<= to_unsigned(write_sel_section, C_DATA_WIDTH);
 			iv_set_section_type 	 				<= to_unsigned(set_section_type, C_DATA_WIDTH);
 			iv_set_delay 		 	 				<= to_unsigned(set_delay, C_DATA_WIDTH);
@@ -214,9 +231,9 @@ BEGIN
 			: IN INTEGER
         ) IS
         BEGIN
-            -- WAIT UNTIL rising_edge(clk);  -- use wait until rising_edge instead of wait for 1 ms (no exact edge defined)
+            -- WAIT UNTIL rising_edge(i_clk);  -- use wait until rising_edge instead of wait for 1 ms (no exact edge defined)
 			-- choose write (and read section)
-			WAIT UNTIL rising_edge(clk);
+			WAIT UNTIL rising_edge(i_clk);
 			iv_set_nr_sections 						<= to_unsigned(set_nr_sections, C_DATA_WIDTH);
 			iv_set_start_repeat_pointer 			<= to_unsigned(set_start_repeat_pointer, C_DATA_WIDTH);
 			iv_set_end_repeat_pointer   			<= to_unsigned(set_end_repeat_pointer, C_DATA_WIDTH);
@@ -229,21 +246,21 @@ BEGIN
 
 		Load_Command_Prod
 		(
-			12,	 	-- iv_set_nr_sections: 0-11
-			4, 		-- iv_set_start_repeat_pointer
-			9, 		-- iv_set_end_repeat_pointer
-			10, 	-- iv_set_cycle_repetition_number: 150
-			2  		-- iv_set_experiment_repetition_number: 10
+			12,	 			-- iv_set_nr_sections: 0-11
+			4, 				-- iv_set_start_repeat_pointer: 4
+			9, 				-- iv_set_end_repeat_pointer: 9
+			10, 			-- iv_set_cycle_repetition_number: 150
+			2  				-- iv_set_experiment_repetition_number: 10
 		);
 
 
 		-- section 0 configuration		
 		WAIT FOR 5 * clk_period;
-		WAIT UNTIL rising_edge(clk);
+		WAIT UNTIL rising_edge(i_clk);
 		Load_Data_Prod
 		(
 			0, 				-- iv_write_sel_section      
-			2, 				-- iv_set_section_type		Phase reset DELAY = 5 us
+			2, 				-- iv_set_section_type		Phase reset DELAY = 0.5 us
 			50, 			-- iv_set_delay
 			0, 				-- iv_set_mux TX
 			0, 				-- iv_set_phase_ch0
@@ -255,7 +272,7 @@ BEGIN
 
 		-- section 1 configuration		
 		WAIT FOR 5 * clk_period;
-		WAIT UNTIL rising_edge(clk);
+		WAIT UNTIL rising_edge(i_clk);
 		Load_Data_Prod
 		(
 			1, 				-- iv_write_sel_section      
@@ -271,11 +288,11 @@ BEGIN
 
 		-- section 2 configuration
 		WAIT FOR 5 * clk_period;
-		WAIT UNTIL rising_edge(clk);
+		WAIT UNTIL rising_edge(i_clk);
 		Load_Data_Prod
 		(
 			2, 				-- iv_write_sel_section      
-			0, 				-- iv_set_section_type 		TX duration = 10 us
+			0, 				-- iv_set_section_type 		TX duration = 4.1 us
 			410, 			-- iv_set_delay
 			1, 				-- iv_set_mux TX
 			pi/2, 			-- iv_set_phase_ch0: 90 deg
@@ -287,11 +304,11 @@ BEGIN
 		
 		-- section 3 configuration
 		WAIT FOR 5 * clk_period;
-		WAIT UNTIL rising_edge(clk);
+		WAIT UNTIL rising_edge(i_clk);
 		Load_Data_Prod
 		(
 			3, 				-- iv_write_sel_section      
-			2, 				-- iv_set_section_type 		wait duration DELAY = 100 us
+			2, 				-- iv_set_section_type 		wait duration DELAY = 1 us
 			100, 			-- iv_set_delay
 			0, 				-- iv_set_mux TX
 			0, 				-- iv_set_phase_ch0: 0 deg
@@ -303,11 +320,11 @@ BEGIN
 		
 		-- section 4 configuration
 		WAIT FOR 5 * clk_period;
-		WAIT UNTIL rising_edge(clk);
+		WAIT UNTIL rising_edge(i_clk);
 		Load_Data_Prod
 		(
 			4, 				-- iv_write_sel_section      
-			2, 				-- iv_set_section_type 		Phase set DELAY = 100 us
+			2, 				-- iv_set_section_type 		Phase set DELAY = 1 us
 			100, 			-- iv_set_delay
 			0, 				-- iv_set_mux TX
 			pi, 			-- iv_set_phase_ch0: 180 deg
@@ -319,11 +336,11 @@ BEGIN
 		
 		-- section 5 configuration
 		WAIT FOR 5 * clk_period;
-		WAIT UNTIL rising_edge(clk);
+		WAIT UNTIL rising_edge(i_clk);
 		Load_Data_Prod
 		(
 			5, 				-- iv_write_sel_section      
-			0, 				-- iv_set_section_type 		TX pi duration DELAY = 20 us
+			0, 				-- iv_set_section_type 		TX pi duration DELAY = 2 us
 			200, 			-- iv_set_delay
 			0, 				-- iv_set_mux TX
 			0, 			-- iv_set_phase_ch0: 180 deg
@@ -335,11 +352,11 @@ BEGIN
 
 		-- section 6 configuration
 		WAIT FOR 5 * clk_period;
-		WAIT UNTIL rising_edge(clk);
+		WAIT UNTIL rising_edge(i_clk);
 		Load_Data_Prod
 		(
 			6, 				-- iv_write_sel_section      
-			2, 				-- iv_set_section_type 		wait duration DELAY = 100 us
+			2, 				-- iv_set_section_type 		wait duration DELAY = 1 us
 			100, 			-- iv_set_delay
 			0, 				-- iv_set_mux TX
 			0, 			-- iv_set_phase_ch0: 0 deg
@@ -351,11 +368,11 @@ BEGIN
 
 		-- section 7 configuration
 		WAIT FOR 5 * clk_period;
-		WAIT UNTIL rising_edge(clk);
+		WAIT UNTIL rising_edge(i_clk);
 		Load_Data_Prod
 		(
 			7, 				-- iv_write_sel_section      
-			2, 				-- iv_set_section_type 		wait duration DELAY = 100 us
+			2, 				-- iv_set_section_type 		wait duration DELAY = 1 us
 			100, 			-- iv_set_delay
 			0, 				-- iv_set_mux RX			mux switch to RX
 			0, 			-- iv_set_phase_ch0: 0 deg
@@ -366,7 +383,7 @@ BEGIN
 		);
 		-- section 8 configuration
 		WAIT FOR 5 * clk_period;
-		WAIT UNTIL rising_edge(clk);
+		WAIT UNTIL rising_edge(i_clk);
 		Load_Data_Prod
 		(
 			8, 				-- iv_write_sel_section      
@@ -382,11 +399,11 @@ BEGIN
 		
 		-- section 9 configuration
 		WAIT FOR 5 * clk_period;
-		WAIT UNTIL rising_edge(clk);
+		WAIT UNTIL rising_edge(i_clk);
 		Load_Data_Prod
 		(
 			9, 				-- iv_write_sel_section      
-			2, 				-- iv_set_section_type 		wait duration DELAY = 100 us
+			2, 				-- iv_set_section_type 		wait duration DELAY = 1 us
 			100, 			-- iv_set_delay
 			0, 				-- iv_set_mux RX
 			0, 			-- iv_set_phase_ch0: 0 deg
@@ -398,11 +415,11 @@ BEGIN
 		
 		-- section 10 configuration
 		WAIT FOR 5 * clk_period;
-		WAIT UNTIL rising_edge(clk);
+		WAIT UNTIL rising_edge(i_clk);
 		Load_Data_Prod
 		(
 			10, 			-- iv_write_sel_section      
-			2, 				-- iv_set_section_type 		last experiment DELAY = 10 us
+			2, 				-- iv_set_section_type 		last experiment DELAY = 1 us
 			100, 			-- iv_set_delay
 			0, 				-- iv_set_mux RX
 			0, 			-- iv_set_phase_ch0: 0 deg
@@ -414,7 +431,7 @@ BEGIN
 
 		-- section 11 configuration
 		WAIT FOR 5 * clk_period;
-		WAIT UNTIL rising_edge(clk);
+		WAIT UNTIL rising_edge(i_clk);
 		Load_Data_Prod
 		(
 			11, 			-- iv_write_sel_section      
@@ -430,7 +447,7 @@ BEGIN
 		
 		
 		WAIT FOR 10 * clk_period;		
-		WAIT UNTIL rising_edge(clk);
+		WAIT UNTIL rising_edge(i_clk);
 		i_en <= '1';
 		
 		WAIT FOR 25000 * clk_period;

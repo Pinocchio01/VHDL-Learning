@@ -1,15 +1,26 @@
-
 ----------------------------------------------------------------------------------------------
- 
--- This document includes standard about libraries, modules and their declaration statements.
-
--- Copyright reserved.
-
+--
+-- Title: data types in VHDL 
+--
+-- Company: University of Stuttgart (IIS)
+--
 -- Author: Yichao Peng
+--
+-- Project Name: VHDL Coding Style
+--
+-- Target Devices: 
+-- Tool Versions: 
+-- Description: This document includes standard VHDL data types and assignments regulations.
+--              Copyright reserved.
+-- Dependencies: 
+-- 
+-- Additional Comments:
+-- 
+-- History:
+-- 	Version 0.1  Create file, Yichao Peng, 2022/09/27 17:28:40
 
--- Last modified : 2022-09-27
+--
 ----------------------------------------------------------------------------------------------
-
 
 
 
@@ -35,7 +46,6 @@ USE work.ALL;
 --		1.4 Library declaration
 LIBRARY library_name;
 USE library_name.package_name.package_parts;
-
 
 
 
