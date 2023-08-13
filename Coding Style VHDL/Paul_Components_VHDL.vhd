@@ -14,56 +14,124 @@
 --              Copyright reserved.
 -- Dependencies: 
 -- 
--- Additional Comments: The codes does not include library declaration unless special case.
+-- Additional Comments: ... means some codes omitted.
 -- 
 -- History:
--- 	Version 0.1  Create file, Yichao Peng, 2022/09/25 15:51:30
---
+-- 	Version 0.1  Create file, Yichao Peng, 2022/09/25 15:51
+--  Version 0.2  Add components, Yichao Peng, 2023/08/10 21:05
 ----------------------------------------------------------------------------------------------
-
-
 
 -- List for components:
 -- 1. 	NAND Gate
--- 2. 	D Flip-Flop with asynchronous reset
+-- 2. 	D Flip-Flop with Asynchronous Reset
 -- 3.   Multiplexer(IF)
 -- 4. 	Down-counter (4-bit)
 -- 5. 	Adder
+-- 6. 	Universal Parity Detector
+-- 7. 	Universal Parity Generator
+-- 8. 	Tri-State Buffer
+-- 9.	Full Adder
+-- 10.  ALU (Arithmetic + Logic -> Multiplexer)
+-- 11.  Vector Shifter
+-- 12.  Mod-10 Counter
+-- 13.  Shift Register
+-- 14.  Cascade Adder
 
 
-LIBRARY ieee;
-USE ieee.std_logic_1164.ALL;
+----------------------------------------------------------------------------------------------
 
 
 -- 1.	NAND Gate
 
+LIBRARY ieee;
+USE ieee.std_logic_1164.ALL;
+
 ENTITY nand_gate IS
 	PORT (
-		a, b : IN BIT;
-		o : OUT BIT
+		a, b : IN bit;
+		o : OUT bit
 		);
 END nand_gate;
 
 ARCHITECTURE Behavioral OF nand_gate IS
 BEGIN
-	o <= a NAND b;
+	o <= a nand b;						-- pure conbinational logic
 END Behavioral;
 
 
 
--- 2. 	D Flip-Flop with asynchronous reset
+-- 2. 	D Flip-Flop with Asynchronous Reset
 
-ENTITY dff is
-	PORT (
-		d, clk, arstn: IN std_logic; -- active low
+-- 2.1 	With sensitivity list
+
+-- 2.1.1 Using IF Statement
+
+LIBRARY ieee;
+USE ieee.std_logic_1164.ALL;
+
+ENTITY dff IS
+	PORT(
+		d, clk, arstn: IN std_logic; 	-- active low
 		q : OUT std_logic
 	);
 END dff;
 
 ARCHITECTURE Behavioral OF dff IS
 BEGIN
-	PROCESS (arstn,clk)
+	PROCESS(arstn, clk)
 	BEGIN
+		IF (arstn = '0') THEN
+			q <= '0';
+		ELSIF rising_edge(clk) THEN
+			q <= d;
+		END IF;
+	END PROCESS;
+END Behavioral;
+
+-- 2.1.2 Using CASE Statement
+
+LIBRARY ieee;
+USE ieee.std_logic_1164.ALL;
+
+ENTITY dff IS
+	PORT(
+		d, clk, arstn: IN std_logic; 					-- Active low
+		q : OUT std_logic
+	);
+END dff;
+
+ARCHITECTURE Behavioral OF dff IS
+BEGIN
+	PROCESS(arstn, clk)
+	BEGIN
+		CASE rstn IS
+			WHEN '1' => q <= '0';
+			WHEN '0' =>
+				IF (clk'event and clk = '1') THEN
+					q <= d;
+				END IF;
+			WHEN OTHERS => NULL;						-- Like UNAFFECTED, nothing happens
+		END CASE;
+	END PROCESS;
+END Behavioral;
+
+-- 2.2 	Without sensitivity list (WAIT ON statement)
+
+LIBRARY ieee;
+USE ieee.std_logic_1164.ALL;
+
+ENTITY dff IS
+	PORT(
+		d, clk, arstn: IN std_logic; 	-- active low
+		q : OUT std_logic
+	);
+END dff;
+
+ARCHITECTURE Behavioral OF dff IS
+BEGIN
+	PROCESS
+	BEGIN
+		WAIT ON rst, clk;
 		IF (arstn = '0') THEN
 			q <= '0';
 		ELSIF rising_edge(clk) THEN
@@ -76,9 +144,26 @@ END Behavioral;
 
 -- 3. Multiplexer
 
+-- 3.0 Multiplexer(Logical Operators only)
+
+ENTITY mux IS
+	PORT(
+		a, b, c, d, s0, s1 : IN std_logic;		-- 4-inputs Multiplexer
+		y : OUT std_logic
+		);
+END mux;
+
+ARCHITECTURE pure_logic OF mux IS
+BEGIN
+	y <= (a and not s1 and not s0) OR			-- not has higher priority than and
+		 (b and not s1 and s0) OR
+		 (c and s1 and not s0) OR
+		 (d and s1 and s0);
+END pure_logic;
+
 -- 3.1 	Multiplexer(IF)
 
-ENTITY mux is
+ENTITY mux IS
 	PORT (
 		a, b : IN std_logic_vector(7 DOWNTO 0);
 		sel  : IN std_logic_vector(1 DOWNTO 0);
@@ -104,16 +189,13 @@ END Behavioral;
 
 -- 3.2 	Multiplexer(WHEN)
 
--- 3.2.1 WHEN/ELSE statement
-
-LIBRARY ieee;
-USE ieee.std_logic_1164.ALL;
+-- 3.2.1 WHEN/ELSE
 
 ENTITY mux IS
 	PORT ( 
 		a, b, c, d : IN std_logic;
 		sel : IN std_logic_vector(1 DOWNTO 0);
-		y : OUT std_logic
+		y   : OUT std_logic
 	);
 END mux;
 
@@ -129,14 +211,11 @@ END Behavioral;
 
 -- 3.2.2.1 STD_LOGIC_VECTOR
 
-LIBRARY ieee;
-USE ieee.std_logic_1164.ALL;
-
 ENTITY mux IS
 	PORT (
-		a, b, c, d : IN STD_LOGIC;
-		sel : IN STD_LOGIC_VECTOR(1 DOWNTO 0);
-		y : OUT STD_LOGIC
+		a, b, c, d : IN std_logic;
+		sel : IN std_logic_vector(1 DOWNTO 0);
+		y   : OUT std_logic
 	);
 END mux;
 
@@ -151,14 +230,11 @@ END mux2;
 
 -- 3.2.2.2 INTEGER
 
-LIBRARY ieee;
-USE ieee.std_logic_1164.ALL;
-
 ENTITY mux IS
 	PORT (
-		a, b, c, d : IN STD_LOGIC;
-		sel : IN INTEGER RANGE 0 TO 3;
-		y : OUT STD_LOGIC
+		a, b, c, d : IN std_logic;
+		sel : IN integer RANGE 0 TO 3;
+		y : OUT std_logic
 	);
 END mux;
 
@@ -175,17 +251,17 @@ END Behavioral1;
 ARCHITECTURE Behavioral2 OF mux IS	-- 2. with WITH/SELECT/WHEN
 BEGIN
 	WITH sel SELECT
-		y <= a WHEN 0,	-- , instead of ;
+		y <= a WHEN 0,							-- , instead of ;
 			 b WHEN 1,
 			 c WHEN 2,
-			 d WHEN 3;	-- here 3 is equal to OTHERS, compared to 3.2.2.1
+			 d WHEN 3;							-- Here 3 is equal to OTHERS, compared to 3.2.2.1
 END Behavioral2;
 
 
 
 -- 4. 	Down-counter (4-bit)
 
-USE ieee.std_logic_signed.ALL;
+USE ieee.std_logic_unsigned.ALL;
 
 ENTITY down_count IS
     PORT ( clk,rst : IN std_logic;
@@ -214,7 +290,7 @@ ARCHITECTURE Behavioral OF down_count IS
             END IF;
     END PROCESS;
     
-    count <= temp; -- concurrent statement
+    count <= temp; 								  -- concurrent statement
 	
 END Behavioral;
 
@@ -224,8 +300,6 @@ END Behavioral;
 
 -- 5.1 Method 1: in/out = SIGNED
 
-LIBRARY ieee;
-USE ieee.std_logic_1164.ALL;
 USE ieee.std_logic_arith.ALL;
 --USE ieee.numeric_std.ALL;
 
@@ -236,15 +310,13 @@ ENTITY adder IS
 	);
 END adder;
 
-ARCHITECTURE adder OF adder IS 	-- * architecture can have same name as entity
+ARCHITECTURE adder OF adder IS 					  -- * Architecture can have same name as entity
 BEGIN
-	sum <= signed('0'&std_logic_vector(a)) + signed('0'&std_logic_vector(b));   -- add one bit only possible in type std_logic_vector
+	sum <= signed('0'&std_logic_vector(a)) + signed('0'&std_logic_vector(b));   -- Add one bit only possible in type std_logic_vector
 END adder;
 
 -- 5.2 Method 2: out = INTEGER
 
-LIBRARY ieee;
-USE ieee.std_logic_1164.ALL;
 USE ieee.std_logic_arith.ALL;
 
 ENTITY adder is
@@ -254,15 +326,13 @@ ENTITY adder is
 	);
 END adder;
 
-ARCHITECTURE adder OF adder IS 	-- * architecture can have same name as entity
+ARCHITECTURE adder OF adder IS
 BEGIN
-	sum <= CONV_INTEGER(a + b);                   -- signed senmantic is like std_logic_vector, and add operation can happen on different width 
+	sum <= CONV_INTEGER(a + b);                   -- Signed senmantic is like std_logic_vector, and add operation can happen on different width 
 END adder;
 
 -- testbench of 5.2
 
-LIBRARY IEEE;
-USE IEEE.STD_LOGIC_1164.ALL;
 USE ieee.std_logic_arith.ALL;
 
 ENTITY tb_adder IS
@@ -279,7 +349,7 @@ SIGNAL sum : integer;
 COMPONENT adder IS
 	PORT (
 		a,b : IN signed(3 DOWNTO 0);
-		sum : OUT integer RANGE -16 TO 15  -- 3-bit signed -8 TO 7
+		sum : OUT integer RANGE -16 TO 15  			-- 3-bit signed -8 TO 7
 	);
 END COMPONENT;
 
@@ -293,7 +363,7 @@ PORT MAP
     sum => sum
 );
 
-PROCESS -- system reference clock
+PROCESS 											-- System reference clock
 BEGIN
 	clk <= '1';
 	WAIT FOR 1 ms;
@@ -318,18 +388,18 @@ END Behavioral;
 
 ENTITY parity_det IS
 	GENERIC (
-		n : INTEGER := 7
+		n : integer := 7
 	);
 	PORT(
 		input  : IN bit_vector(n DOWNTO 0);
-		output : OUT BIT;
+		output : OUT bit;
 	);
 END parity_det;
 
 ARCHITECTURE parity OF parity_det IS
 BEGIN
 	PROCESS (input) -- sensitivity list only input, not sequential circuit
-		VARIABLE temp : BIT;
+		VARIABLE temp : bit;
 	BEGIN
 		temp :=  '0';
 		FOR i IN input'RANGE LOOP
@@ -341,8 +411,6 @@ END parity;
 	
 -- testbench of parity detector
 
-LIBRARY ieee;
-USE ieee.std_logic_1164.ALL;
 
 ENTITY tb_parity_det IS
 --  Port ( );
@@ -352,11 +420,11 @@ ARCHITECTURE Behavioral OF tb_parity_det IS
 
 COMPONENT parity_det IS
 	GENERIC (
-		n : INTEGER := 7
+		n : integer := 7
 	);
 	PORT(
 		input  : IN bit_vector(n DOWNTO 0);
-		output : OUT BIT
+		output : OUT bit
 	);
 END COMPONENT;
 
@@ -398,19 +466,19 @@ END Behavioral;
 
 ENTITY parity_gen IS
 	GENERIC (
-		n : INTEGER := 7
+		n : integer := 7
 	);
 	PORT (
-		input : IN BIT_VECTOR(n-1 DOWNTO 0);
-		output : OUT BIT_VECTOR(n DOWNTO 0)
+		input : IN bit_vector(n-1 DOWNTO 0);
+		output : OUT bit_vector(n DOWNTO 0)
 	);
 END parity_gen;
 
 ARCHITECTURE Behavioral OF parity_gen IS
 BEGIN
 	PROCESS (input)
-		VARIABLE temp1 : BIT;
-		VARIABLE temp2 : BIT_VECTOR(output'RANGE);
+		VARIABLE temp1 : bit;
+		VARIABLE temp2 : bit_vector(output'RANGE);
 	BEGIN
 		temp1 := '0';	-- parity bit initial value '0'
 		FOR i IN input'RANGE LOOP
@@ -424,9 +492,6 @@ END Behavioral;
 		
 -- testbench of parity generator
 
-LIBRARY ieee;
-USE ieee.std_logic_1164.ALL;
-
 ENTITY tb_parity_gen IS
 --  Port ( );
 END tb_parity_gen;
@@ -435,11 +500,11 @@ ARCHITECTURE Behavioral OF tb_parity_gen IS
 
 COMPONENT parity_gen IS
 	GENERIC (
-		n : INTEGER := 8
+		n : integer := 8
 	);
 	PORT (
-		input : IN BIT_VECTOR(n-1 DOWNTO 0);
-		output : OUT BIT_VECTOR(n DOWNTO 0)
+		input : IN bit_vector(n-1 DOWNTO 0);
+		output : OUT bit_vector(n DOWNTO 0)
 	);
 END COMPONENT;
 
@@ -475,18 +540,15 @@ END Behavioral;
 
 
 
--- 8. 	Tri-State buffer
+-- 8. 	Tri-State Buffer
 
--- ena low then output <= input; end high then output <= "ZZZZZZZZ" (high impedence)
-
-LIBRARY ieee;
-USE ieee.std_logic_1164.ALL;
+-- ena low then output <= input; ena high then output <= "ZZZZZZZZ" (high impedence)
 
 ENTITY tri_state IS
 	PORT (
-		ena : IN STD_LOGIC;
-		input : IN STD_LOGIC_VECTOR(7 DOWNTO 0);
-		output : OUT STD_LOGIC_VECTOR(7 DOWNTO 0)
+		ena : IN std_logic;
+		input : IN std_logic_vector(7 DOWNTO 0);
+		output : OUT std_logic_vector(7 DOWNTO 0)
 	);
 END tri_state;
 
@@ -500,45 +562,155 @@ END Behavioral;
 
 -- 9.	Full adder
 
--- carry and addition result: cout = a.b + a.cin + b.cin
+-- Carry and addition result: cout = a.b + a.cin + b.cin
 
 ENTITY full_adder IS
-PORT (a, b, cin : IN BIT;
-	  s, cout   : OUT BIT);
+	PORT(
+		a, b, cin : IN bit;
+		s, cout   : OUT bit
+	);
 END full_adder;
 
 ARCHITECTURE dataflow OF full_adder IS
 BEGIN
-	s <= a XOR b XOR cin;
-	cout <= (a AND b) OR (b AND c) OR (a AND cin);
+	s <= a xor b xor cin;
+	cout <= (a and b) or (b and c) or (a and cin);	-- Equal to (a and b) or ((a xor b) and c)
 END dataflow;
 
 
 
+-- 10.  ALU (Arithmetic + Logic -> Multiplexer)
+
+USE ieee.std_logic_unsigned.ALL;					-- For arithmetic calculations
+
+ENTITY ALU IS
+	PORT(
+		a, b : IN std_logic_vector(7 DOWNTO 0);
+		s	 : IN std_logic_vector(3 DOWNTO 0);		-- MSB choose A or L, other 3 bits for different functions
+		cin  : IN std_logic;
+		y    : OUT std_logic_vector(7 DOWNTO 0)		
+	);
+END ALU;
+
+ARCHITECTURE dataflow OF ALU IS
+	SIGNAL arith, logic : std_logic_vector(7 DOWNTO 0) := (OTHERS => '0');	-- Store arith and logic operation results
+BEGIN
+	--------------- Arithmetic Unit: -----------------
+	WITH sel(2 DOWNTO 0) SELECT
+		arith <= a 	   		 WHEN "000",			-- choose a
+			  <= a + 1 		 WHEN "000",			-- a + 1
+			  <= a - 1 		 WHEN "000",			-- a - 1
+			  <= b 			 WHEN "000",			-- choose b
+			  <= b + 1 		 WHEN "000",			-- b + 1
+			  <= b - 1 		 WHEN "000",			-- b - 1
+			  <= a + b  	 WHEN "000",			-- a + b
+			  <= a + b + cin WHEN OTHERS;			-- a + b + cin
+	---------------- Logic Unit: ---------------------
+	WITH sel(2 DOWNTO 0) SELECT
+		logic <= not a 	   	 WHEN "000",
+			  <= not b 		 WHEN "000",
+			  <= a and b 	 WHEN "000",
+			  <= a or b 	 WHEN "000",
+			  <= a nand b 	 WHEN "000",
+			  <= a nor b 	 WHEN "000",
+			  <= a xor b  	 WHEN "000",	
+			  <= not(a xor b)WHEN OTHERS;		  
+	------------------- Mux: --------------------------
+	WITH sel(3) SELECT
+		y < arith WHEN '0',
+			logic WHEN OTHERS;	
+END dataflow;
 
 
 
+-- 11.  Vector Shifter (GENERATE Statement)
+-- 		Shift a 4-bit vector 0-4 bit left to form a 8-bit vector.
+
+ENTITY vector_shifter IS
+	PORT(
+		inp  : IN std_logic_vector(3 DOWNTO 0);
+		sel  : IN integer RANGE 0 TO 4;
+		outp : OUT std_logic_vector(7 DOWNTO 0)
+	);
+END vector_shifter;
+
+ARCHITECTURE Behavioral OF vector_shifter IS
+	SUBTYPE vector IS std_logic_vector(7 DOWNTO 0);
+	TYPE matrix IS ARRAY(4 DOWNTO 0) OF vector;
+	SIGNAL rows : matrix;
+BEGIN
+	rows(0) <= "0000" & inp;					-- "00001111"
+	G1 : FOR i IN 1 TO 4 GENERATE
+		rows(i) = row(i-1)(6 DOWNTO 0) & '0';	-- Equal to sll, but sll not on std_logic_vector
+	END GENERATE;
+	outp <= rows(sel);							-- Choose after generation of all possible results
+END Behavioral;
 
 
 
+-- 12.  Mod-10 Counter
+
+LIBRARY ieee;
+USE ieee.std_logic_1164.ALL;
+
+ENTITY counter IS
+	PORT(
+		clk   : IN std_logic;
+		digit : OUT integer RANGE 0 TO 9
+	);
+END counter;
+
+ARCHITECTURE Behavioral OF counter IS
+BEGIN
+	count_proc : PROCESS(clk)
+		VARIABLE temp : integer RANGE 0 TO 10;
+	BEGIN
+		IF (clk'event and clk = '1') THEN			-- Equal to: WAIT UNTIL (clk'event and clk = '1');
+			temp := temp + 1;
+			IF (temp=10) THEN
+				temp := 0;
+			END IF;
+		END IF;
+		digit <= temp;
+	END PROCESS;
+END Behavioral; 
 
 
 
+-- 13.  Shift Register
+-- 		Output signal q will have n clk_period delay than input signal d.
+
+LIBRARY ieee;
+USE ieee.std_logic_1164.ALL;
+
+ENTITY shiftreg IS
+	GENERIC(
+		n : integer := 4; 					-- # of stages
+	);
+	PORT(
+		d, clk, rstn : IN std_logic;
+		q : OUT std_logic
+	);
+END shiftreg;
+
+ARCHITECTURE Behavioral OF shiftreg IS
+	SIGNAL temp : std_logic_vector(n-1 DOWNTO 0) := (OTHERS => '0');
+BEGIN
+	PROCESS(clk, rst):
+	BEGIN
+		IF (rstn = '0') THEN				-- Asynchronous reset
+			temp <= (OTHERS => '0');
+		ELSIF (clk'event and clk = '1') THEN
+			temp <= 'd' & temp(temp'left DOWNTO 1);
+		END IF;
+	END PROCESS;
+	q <= temp(0);
+END Behavioral;
+	
 
 
+-- 14.  Cascade Adder
+--		Sum: s_j = a_j XOR b_j XOR c_j
+--		Carry: c_(j+1) = (a_j AND b_j) OR (a_j AND c_j) OR (b_j AND c_j)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+-- 14.1 Generic, with vectors
